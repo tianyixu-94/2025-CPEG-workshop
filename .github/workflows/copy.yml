@@ -1,0 +1,54 @@
+name: Copy to workshop repo
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  copy:
+    if: github.repository != 'palaeoverse/workshop-template'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add SSH key to ssh-agent
+        uses: webfactory/ssh-agent@v0.7.0 # or the latest version
+        with:
+          ssh-private-key: ${{ secrets.SSH_DEPLOY_KEY }} # Your private key secret
+
+      - name: Checkout Source Repository into subfolder
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ssh-key: ${{ secrets.SSH_DEPLOY_KEY }} # Pass the private key to checkout
+          path: ./${{ github.event.repository.name }} # Clone the source repo into a temporary directory
+
+      - name: Remove git files
+        run: |
+          rm -rf ./${{ github.event.repository.name }}/.git
+          rm -rf ./${{ github.event.repository.name }}/.github
+
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          repository: palaeoverse/workshop # Replace with your target repository details
+          ssh-key: ${{ secrets.SSH_DEPLOY_KEY }} # Pass the private key to checkout
+          path: ./target_repo # Clone the target repo into a temporary directory
+
+      - name: Copy source repo into subfolder of target repo
+        run: |
+          rm -rf ./target_repo/${{ github.event.repository.name }}
+          mkdir -p ./target_repo/${{ github.event.repository.name }}
+          mv ./${{ github.event.repository.name }} ./target_repo/
+
+      - name: Add and Commit Changes
+        run: |
+          cd ./target_repo
+          git config --global user.email "willgearty@gmail.com"
+          git config --global user.name "Will Gearty"
+          git status
+          git add --all
+          git commit -a -m "${{ github.event.head_commit.message }} (copied from ${{ github.repository }}" || echo "Nothing to commit"
+
+      - name: Push Changes
+        run: |
+          cd ./target_repo
+          git push
