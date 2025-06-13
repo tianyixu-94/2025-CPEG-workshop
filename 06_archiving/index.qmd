@@ -1,8 +1,8 @@
 ---
-title: "[UNIT SHORT NAME]"
+title: "Archiving & Publishing"
 subtitle: "[UNIT LONG NAME]"
 toc: true
-order: 2
+order: 6
 ---
 
 # Add content

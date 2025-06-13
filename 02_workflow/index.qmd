@@ -1,8 +1,8 @@
 ---
-title: "[UNIT SHORT NAME]"
+title: "Setting up a reproducible workflow"
 subtitle: "[UNIT LONG NAME]"
 toc: true
-order: 3
+order: 2
 ---
 
 # Add content
