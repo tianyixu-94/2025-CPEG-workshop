@@ -46,7 +46,7 @@ jobs:
           git config --global user.name "Will Gearty"
           git status
           git add --all
-          git commit -a -m "${{ github.event.head_commit.message }} (copied from ${{ github.repository }}" || echo "Nothing to commit"
+          git commit -a -m "${{ github.event.head_commit.message }} (copied from ${{ github.repository }})" || echo "Nothing to commit"
 
       - name: Push Changes
         run: |
