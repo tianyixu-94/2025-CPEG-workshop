@@ -1,0 +1,113 @@
+---
+title: "Introduction"
+format: revealjs
+---
+
+## Workspace Hygiene
+
+. . .
+
+**Start from a clean slate!**
+
+. . .
+
+
+Your workspace is your laboratory - keep it free of contamination!
+
+. . .
+
+***Tools > Global Options > General***
+
+In the "Basic" tab
+
+- Unceck "Restore .RData into workspace at startup"
+- Set "Save workspace to .RData on exit" to "Never"
+
+## Absolute and Relative Paths
+
+. . .
+
+Your code should run on any machine!
+
+. . .
+
+```{r}
+#| eval: false
+#| echo: true
+# BAD PRACTICE: path and data does not exist on other machines
+read.csv("C:/path/to/important/raw/data.csv")
+```
+
+. . .
+
+```{r}
+#| eval: false
+#| echo: true
+# BAD PRACTICE: works only on one specific machine
+setwd("C:/path/to/folder/that/only/exists/on/my/machine")
+```
+
+. . .
+
+```{r}
+#| eval: false
+#| echo: true
+# BAD PRACTICE: requires manual work
+# to run this script, go to
+# Session -> Set Working Directory -> To Source File Location
+# to set your working directory correctly
+```
+
+## Introducing: RProjects
+
+::: {.incremental}
+
+- Project files that set working directory automatically after opening the project
+- Whole project folder can be passed between machines and people
+- Specific to RStudio
+
+:::
+
+## Starting with RProjects
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+File > New Project
+
+Then select your preferred option
+
+:::
+
+::: {.column width="50%"}
+Picture coming soon
+
+:::
+
+::::
+
+## Working with RProjects
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+File > Open Project > Select RProject file
+
+Work in Rstudio as usual
+
+All paths are set relative to the .RProject file
+
+:::
+
+::: {.column width="50%"}
+Picture coming soon
+
+:::
+
+::::
+
+
+
