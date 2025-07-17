@@ -11,14 +11,11 @@ format:
     footer: |
       4th Crossing the Paleontological-Ecological Gap (CPEG) Meeting &\
       3rd Conservation Paleobiology Symposium
-    theme:
-      - simple
-      - brand
+    theme: simple
     embed-resources: true
     output-file: "rproj_github.html"
     mermaid:
       theme: default
-brand: _brand.yml
 ---
 
 ## Goals
