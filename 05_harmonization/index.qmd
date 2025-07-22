@@ -1,6 +1,6 @@
 ---
-title: "Data processing II"
-subtitle: "Data processing II: Data harmonization and synthesis"
+title: "Data Processing II"
+subtitle: "Data Processing II: Data Harmonization and Synthesis"
 toc: true
 order: 5
 ---
@@ -27,7 +27,29 @@ IV.  Data visualisation and synthesis
 
 ## I. Introduction to Harmonization and Synthesis
 
-Presentation goes here??
+So far today, we've used R to carry out a variety of operations for preparing research projects, as well as for acquiring and preparing palaeontological data. However, we can also use R to carry out various analyses with the aim of answering specific research questions. We touched on this briefly during the last session when we looked at the latitudinal ranges of Crocodylia occurrences, but we can push our analyses further than that.
+
+It will be of no surprise to anyone in this room that we are in the midst of a biodiversity crisis. Understanding and anticipating the changes that will occur to organisms, their communities, and the environments that they inhabit as a result of climate change and other anthropogenic processes has emerged as a primary goal of our disciplines. Traditionally, modern ecologists have focused on studying current or recent historical processes to address question related to biodiversity loss and the impacts of climate change, while paleoecologists have studied long-term processes in the fossil record (Nieto-Lugilde et al. 2021). However, it is becoming increasingly clear that the answers to some of the most important questions relate to the fuzzy area between our modern and palaeo records:
+
+- Can past ecosystems be used as analogues for ones in the present day? Can we understand future changes to biodiversity by examining past losses?
+- What are the main drivers and impacts of collapse within communities and ecosystems?
+- When examining modern ecosystems, have crucial elements been lost? How can we ensure we are using accurate baselines for conservation efforts?
+
+To answer these questions, we have to turn to data. As you've seen earlier, there are a wealth of available datasets that contain information about organisms and climate in both the modern and past, be that across shallow or deep time. Individually these datasets show the outcome of various processes that operate on a range of different spatial and temporal scales. For instance, the below figure from Darroch et al. 2022 shows the potential drivers of geographic range in organisms across modern, historical and palaeontological datasets:
+
+![Figure from Darroch et al. 2022](Figure1.png)
+
+This figure emphasizes that ecological patterns such as geographic range are driven by processes operating on a continuum. The past and present are interconnected, and both can provide valuable information that can be combined to improve our understanding of underlying ecological processes. By developing approaches to harmonize data across timescales, we can begin to utilize this information to better understand drivers of ecological change, improve predictions of future biodiversity responses, and bridge the palaeo-ecological divide.
+
+One research area that is particularly impacted by the harmonization of palaeo and modern occurrence data is that of Species Distribution Models, or SDMs. These models correlate occurrences of species with climatic and environmental variables, and then use these associations to predict the distribution of that species across time and space. Consequently, they are frequently used to forecast species range shifts and understand potential losses in biodiversity as a result of future climate change. However, only including modern occurrences in these models excludes a vast amount of data of where organisms may have occupied in the past, running the risk of only predicting the occupied niche as opposed to gaining an understanding of the fundamental niche of a species (e.g. Veloz et al. 2012). This can have serious knock-on effects when attempting to predict the distribution of species under different climate scenarios. Consequently, studies have started to use the historical and palaeontological distribution of occurrences within these models. As you can see below, including coral occurrences from the last interglacial drastically changes the predicted habitability of corals under different IPCC forecasted climate scenarios (Jones et al. 2019):
+
+![](Figure2.jpg)
+
+![Figures from Jones et al. 2019](Figure3.jpg)
+
+Another clear example of the harmonization of palaeo and modern data is in understanding long-term baselines of species distributions for conservation. 
+
+However, there are many considerations that have to be taken into account when carrying out this type of research, and a number of practical challenges that have to be overcome to ensure that the results we get are meaningful and useful. Differences in spatial and temporal scales, data types, and various biases that impact our data sources all make this research difficult to carry out. Today, we are going to give you a brief introduction to this very broad area of research, in particular focusing on the considerations that have to be made regarding our data and research approaches. Let's dig in!
 
 ## II. Planning, Setup, and Finding Your Data
 
@@ -56,15 +78,15 @@ Even at this first step, the decisions we make will have consequences for our re
 
 ## **BREAKOUT SESSION 1**
 
-**Organize yourselves into groups of 4-6 and discuss the following questions:**
+**Organize yourselves into groups of 4-6 and take 10 minutes to discuss the following questions:**
 
-***- What issues might we encounter when sourcing, gathering, and working with these various climatic and occurrence datasets?***
+***1. What issues might we encounter when sourcing, gathering, and working with these various climatic and occurrence datasets?***
 
-***-What caveats should we be aware of, and how can they be addressed?***
+***2. What caveats should we be aware of, and how can they be addressed?***
 
 ## III. Building a Workflow to Merge Datasets
 
-We'll now walk through an example for how we might acquire and harmonize our climatic data. First, let's make a plan of the steps we'll take and some of the decisions we'll need to consider along the way.
+To help you get an idea for the process of using data from different sources, we'll now walk through an example for how we might acquire and harmonize our climatic data. First, let's make a plan of the steps we'll take and some of the decisions we'll need to consider along the way.
 
 1.  **Decide which climate data to use.** What will be most appropriate for the taxonomic group we are studying? Some potential choices might be:
 
@@ -75,10 +97,11 @@ We'll now walk through an example for how we might acquire and harmonize our cli
 
 2.  **Find a suitable source of data.** We will need to find spatially climatic data for each time interval we are interested in and acquire it in an appropriate format (.nc). What factors might we consider?
 
+-   Availability of specifications listed above
 -   Spatial resolution
 -   Temporal resolution
 
-3.  **Sort file structure.** Ensure that your R project is set up appropriately and that the downloaded files are in an appropriate place.
+3.  **Sort file structure.** Ensure that your R project is set up appropriately and that the downloaded files are in an appropriate place to be used in your project, remembering to follow some of the guidance that we've covered earlier on today (e.g. ensuring there are raw versions of your data saved).
 
 4.  **Load data.** Read our data into R in an appropriate format to work with (e.g., raster). How might we do this? What packages might we need?
 
@@ -114,6 +137,7 @@ First, we'll need to install and load some packages that will allow us to work w
 #install.packages("geodata")
 #install.packages("rnaturalearth")
 #install.packages("ncdf4")
+#install.packages("rgplates")
 ```
 
 ```{r warning=F}
@@ -127,76 +151,90 @@ library(sf)
 library(geodata)
 library(rnaturalearth)
 library(ncdf4)
+library(rgplates)
 ```
+
+We'll also set some default values to ensure that our spatial datasets conform with one another. 
 
 ```{r}
-# Set resolution
+# Set spatial resolution
 res <- 1
 
-# Set extent
+# Set spatial extent
 e <- extent(-180, 180, -90, 90)
 
-# Make generic raster
-r <- raster(res = res, ext = e)
+# Make generic raster using these values
+ref.raster <- raster(res = res, ext = e)
 ```
 
+Now lets find some climate data!
 
 ### 1. Organising Palaeo-climatic Data
 
-```{r}
-# Make function to carry out action faster
-prep.raster <- function(file_path, ref.raster){
-  # Load .nc file
-  raster2prep <- raster(file_path)
-  # Rotate data to solve world wrapping issue (if necessary)
-  raster.rotated <- raster::rotate(raster2prep)
-  # Resample data (the extent and resolution must be updated to avoid rgdal issue)
-  raster.resampled <- resample(x = raster.rotated, y = ref.raster)
-  # Return data
-  return(raster.resampled)
-}
-```
+After exploring several potential palaeo-climatic datasets, we've decided to use a dataset of global mean surface temperatures for the Phanerozoic (Scotese 2021), based on HadleyCM3L simulations and aligned with geochemical proxies like ∂18O. The data are available for 5-million-year intervals that cover our time period of interest (Miocene) and have a 1x1 degree (lat/long) resolution. The dataset is also publicly accessible via Zenodo: https://zenodo.org/records/5718392.
 
-After exploring several potential palaeo-climatic datasets, we've decided to use a dataset of global mean surface temperatures for the Phanerozoic (Scotese 2022), based on HadleyCM3L simulations and aligned with geochemical proxies like ∂18O. The data are available for 5-million-year intervals that cover our time period of interest (Miocene) and have a 1x1 degree (lat/long) resolution. The dataset is also publically accessible via Zenodo: https://zenodo.org/records/5718392.
-
-Citations:
-Scotese, C. R., Song, H., Mills, B. J. W., & van der Meer, D. G. (2021). Phanerozoic paleotemperatures: The earth’s changing climate during the last 540 million years. Earth-Science Reviews, 215, 103503. https://doi.org/10.1016/j.earscirev.2021.103503
-
-Valdes, P.J., Scotese, C.R., and Lunt, D.J. (2021). Deep Ocean Temperatures through Time, Climates of the Past, Discussions, https://doi.org/10.5194/cp-2020-83. 
+  Scotese, C. R., Song, H., Mills, B. J. W., & van der Meer, D. G. (2021). Phanerozoic paleotemperatures: The earth’s changing climate during the last 540 million years. Earth-Science Reviews, 215, 103503. https://doi.org/10.1016/j.earscirev.2021.103503
+  
+  Valdes, P.J., Scotese, C.R., and Lunt, D.J. (2021). Deep Ocean Temperatures through Time, Climates of the Past, Discussions, https://doi.org/10.5194/cp-2020-83. 
 
 This climatic dataset offers decently high temporal resolution (for deep time), but one thing we'll need to keep in mind is that the 5-million-year intervals don't align perfectly with geological stages. This will come into play later when we start working with the occurrence data.
 
-For our study, we'll work with two files from this dataset: one covering 25-20 Ma and another covering 20-15 Ma. These data span warming intervals like the Mid Miocene Climatic Optimum and cooling intervals like the Oligocene-Miocene Climate Transition.
+For our study, we'll work with two files from this dataset: one covering 25-20 Ma and another covering 20-15 Ma. These data span warming intervals like the Mid Miocene Climatic Optimum and cooling intervals like the Oligocene-Miocene Climate Transition. 
+
+First, we need to load in our data, which is currently stored as a .nc file, and have a look at it. This can be read into R as a raster using the 'raster' package:
 
 ```{r}
-# Load in our data
-# 20-15 Ma interval
-scotese15 <- prep.raster(file_path = "015_tas_scotese02a_v21321.nc", 
-                         ref.raster = r)
 
-# 25-20 Ma interval
-scotese20 <- prep.raster(file_path = "020_tas_scotese02a_v21321.nc", 
-                         ref.raster = r)
+# Load in rasters of palaeoclimate for each time interval
+raster2prep.15 <- raster(x = "015_tas_scotese02a_v21321.nc")
+raster2prep.20 <- raster(x = "015_tas_scotese02a_v21321.nc")
+
+raster2prep.15
+raster2prep.20
+
+```
+As you can see, the resolution and extent of these rasters doesn't quite match our reference one that we made above. We'll have to resample our data to match our reference raster:
+
+```{r}
+
+# Resample data to match our set extent and resolution
+raster.resampled.15 <- resample(x = raster2prep.15, y = ref.raster)
+raster.resampled.20 <- resample(x = raster2prep.20, y = ref.raster)
+
+```
+
+Finally, we can stack these rasters into one file, name them, and see what they look like:
+
+```{r}
 # Stack rasters
-scotese.temp <- stack(scotese15, scotese20)
+scotese.temp <- stack(raster.resampled.15, raster.resampled.20)
 
 # Name and plot rasters
 names(scotese.temp) <- c("Burdigalian","Aquitanian")
 plot(scotese.temp)
 ```
 
+Now we'll move on to our modern data!
+
 ### 2. Organising Modern Climatic Data
 
-We'll obtain our modern climatic data from WorldClim: https://www.worldclim.org/
+We'll obtain our modern climatic data from WorldClim: 
+
+https://www.worldclim.org/
+
 To keep our climatic variables consistent, we'll also work with the mean annual temperature data.
 
-NOTE: in here include option for pre-downloaded data
+Whilst below we show you code to access this data directly within R, it can take a while to download. We've therefore also included it alongside the other materials for the workshop, which can be accessed HERE.
 
 ```{r}
 # Load data from WorldClim and make into raster
-modern <- worldclim_global(var = "tavg", res = 2.5, path = tempdir())
+modern <- worldclim_global(var = "tavg", res = 10, path = tempdir())
 modern <- as(modern, "Raster")
+modern
+```
+As you can see, whilst the extent matches our reference raster, these modern climatic data are considerably higher resolution than what we have available for our deep-time data. They're also provided on a monthly basis, so we'll have to calculate the mean temperature before we can use this for comparison:
 
+```{r}
 # Calculate mean annual temperature
 modern.mean <- calc(x = modern, fun = mean)
 
@@ -204,23 +242,22 @@ modern.mean <- calc(x = modern, fun = mean)
 plot(modern.mean)
 ```
 
-This modern climatic data are considerably higher resolution than what we have available for our deep-time data. What issues might this cause? What actions could we take to resolve this? What could we test?
-
+What issues might this higher resolution cause? What actions could we take to resolve this? What could we test?
 
 ## **BREAKOUT SESSION 2**
 
-**Now it's your turn to give it a go!**
+**Now it's your turn to give it a go! Over the next 15-20 minutes we're going to go through the same process for our occurrence data:** 
 
-***-First, take a couple minutes to jot down a workflow for the fossil and modern occurrence data. Think about where you might find these data, if you'll need to do any filtering, and how you might get them in the right format such that we can make fair comparisons across time with the climatic data that we just read into R.***
+***1. First, take a couple minutes to jot down a workflow for the fossil and modern occurrence data. Think about where you might find these data, if you'll need to do any filtering, and how you might get them in the right format such that we can make fair comparisons across time with the climatic data that we just read into R. If you're an experienced R user, you can also start to plan your code.***
 
-***-Then, get into the same groups and discuss your approach and where you might encounter potential pitfalls.*** 
+***2. Then, get into the same groups you were in previously to discuss your approach. Where you might encounter potential pitfalls? What packages or approaches might make this process easier?*** 
 
 
 ### Solution
 
 ::: {.callout-tip title="Solution" collapse="true"}
 
-Let's start by thinking about what we need from our occurrence datasets. To answer our question, we aim to compare Crocodylia occurrences in the past and present in relation to temperature data from the same points.
+Let's start by thinking about what we need from our occurrence datasets. To answer our question, we aim to compare Crocodylia occurrences in the past and present in relation to temperature data from the same geographic coordinates.
 
 How do we get there? Let's outline some potential steps:
 
@@ -278,6 +315,12 @@ For ease, here's a csv of the raw data:
 modern_occ <- read.csv("crocs_modern.csv") 
 ```
 
+::: {.callout-important}
+
+#### Don't forget!
+
+Remember what we learnt in our session earlier: keep raw data raw! Make sure to always keep a copy of the raw data that you have used for your analyses, be that occurrence data or covariate data (such as climatic data).
+:::
 
 ### 2. Filtering
 
@@ -320,11 +363,9 @@ We'll then want to explore and clean our data to check for outliers, inconsisten
 
 Our fossil occurrence dataset has already gone through this process.
 
+::: {.callout-note title="Practise Time!"}
 **Let's spend a couple of minutes cleaning and familiarising ourselves with the GBIF data, applying what we learned in the previous session.** For example, you might look at the range of latitudes represented by occurrences or check the taxa for spelling errors. You could plot them on a map to see if you notice any geographic oddities. Or you could check for duplicates.
-
-```{r}
-# Practice cleaning the modern occurrence dataset here!
-```
+:::
 
 
 ### 4. Merging
@@ -333,13 +374,13 @@ Now we come to the fun part. How do we align these data, which were sampled in d
 
 ## **BREAKOUT SESSION 3**
 
-**Return to your discussion groups and discuss the following questions:**
+**Return to your discussion groups and take 5 minutes to discuss the following questions:**
 
-***-What factors that might introduce bias when we try to make comparisons across these datasets?***
+***1. What factors that might introduce bias when we try to make comparisons across these datasets?***
 
-***-What are some sources of uncertainty?***
+***2. What are some sources of uncertainty?***
 
-***-How might we address these potential confounds prior to analysis and/or what should we keep in mind as we're interpreting our results?***
+***3. How might we address these potential confounds prior to analysis and/or what should we keep in mind as we're interpreting our results?***
 
 ::: {.callout-tip collapse="true"}
 The resolution and coverage of the data is likely one aspect that came up in your group discussions. As we move forward, we'll need to make some practical and philosophical decisions about how we bin the data given their varying resolutions. We'll also want to consider the sensitivity of our results to these various decisions. 
@@ -347,7 +388,7 @@ The resolution and coverage of the data is likely one aspect that came up in you
 
 Here, we'll touch on several key taxonomic, temporal, and spatial considerations when endeavoring to make these datasets comparable.
 
-#### Taxonomy
+#### 4A. Taxonomy
 
 We'll be using higher-level taxonomic groups for our analysis. Let's take a look to see what's here.
 ```{r}
@@ -360,22 +401,23 @@ table(modern_occ_filter$family)
 
 We see that the same families are represented in our datasets. If you were to look at the genera, you'll notice some differences. If we wanted to run an analysis at a finer taxonomic level, what would be some key considerations or steps that we would need to take?
 
-#### Temporal Bins
+#### 4B. Temporal Bins
 
 Earlier, we noticed that our climatic data were available at 5-million-year intervals, which don't align perfectly with geological stages. For example, our 25-20 Ma interval crosses the Chattian and Aquitanian stages and the 20-15 Ma interval crosses the Burdigalian and Langhian stages. Each fossil occurrence has an associated age and interval range. We want to create time bins that roughly correspond with our climate layer so we can look at occurrences in relation to the temperature reconstructions. How might we approach this?
 
 First, let's take a look at the temporal distribution of our fossil occurrences.
 ```{r}
-tax_range_time(occdf = fossil_occ_filter, 
+head(x = tax_range_time(occdf = fossil_occ_filter, 
                name = "occurrence_no",
                min_ma = "min_ma", 
                max_ma = "max_ma", 
-               plot = TRUE)
+               plot = TRUE))
 axis_geo(intervals = "stages")
 ```
 
 One option would be to bin the data by stage and use those as proxies for our 5-million-year climatic intervals.
 Another approach might be to make near-equal-length bins within the 25-15 Ma range, and then assign occurrences to those bins. Let's try that here. 
+
 ```{r}
 # Generate time bins of ~5 million years within 25 and 15 Ma
 bins <- time_bins(interval = c(15,25), 
@@ -426,8 +468,7 @@ Our GBIF dataset already contains just modern data, which overlaps with our Worl
 
 OK, so now we have some temporal bins to facilitate our comparisons with the climatic data.
 
-
-#### Spatial Bins
+#### 4C. Spatial Bins
 
 We also observed that the spatial resolution of the climatic data differed between the past and present. Additionally, the uncertainties in the coordinates for our modern and fossil occurrences differ, especially since we'll need to rely on plate models to palaeorotate the geographic positions of our fossil occurrences. How might we deal with this?
 
@@ -445,7 +486,7 @@ ggplot(fossil_occ_bin) +
   theme_void()
 ```
 
-But wait, remember that we need to paleorotate our coordinates before we proceed. We could run a couple different plate models to check the sensitivity.
+But wait, remember that we need to paleorotate our coordinates before we proceed. We could run a couple different plate models to check the sensitivity, but for now we'll just use the PALEOMAP rotation, which will also match up to our paleoclimatic data. 
 ```{r}
 # Palaeorotation
 fossil_occ_bin_rot <- palaeorotate(fossil_occ_bin,
@@ -453,15 +494,23 @@ fossil_occ_bin_rot <- palaeorotate(fossil_occ_bin,
                                    lat = "lat",
                                    age = "bin_midpoint", 
                                    model  = "PALEOMAP")
+```
 
+After some cleaning, we can then plot our rotated occurrences on a palaeogeographic map (here we're going to use our bin 3):
+
+```{r}
 # Remove NAs
 fossil_occ_bin_rot <- fossil_occ_bin_rot %>%
   dplyr::filter(!is.na(p_lng) & !is.na(p_lat))
 
-# Plot palaeorotated coordinates
-world <- ne_countries(scale = "small", returnclass = "sf")
-ggplot(fossil_occ_bin_rot) +
-  geom_sf(data = world) +
+# Use the rgplates package to reconstruct a palaeogeographic map
+coastlines <- reconstruct("coastlines", age=15, model="PALEOMAP")
+
+# Plot palaeorotated coordinates for bin 3
+fossil_occ_bin_rot %>%
+  dplyr::filter(bin_assignment == 3) %>%
+  ggplot() +
+  geom_sf(data = coastlines) +
   geom_point(aes(x = p_lng, y = p_lat)) +
   labs(x = "Paleolongitude (º)",
        y = "Paleolatitude (º)")+ 
@@ -484,14 +533,15 @@ ggplot(modern_occ_filter) +
 
 Looking at these spatial representations of the data, we can really visualise the difference in sampling effort. How might we account for the spatial structure of the data in our analysis?
 
-Another challenge stems from aligning these occurrences with the spatial explicit climate layers. A simple approach would be to extract the mean temperature value at each coordinate. Alternatively, we might consider adding a bit of a buffer around each coordinate to incorporate geographic uncertainty and variation in the climatic data. A third, albeit more complex approach, would be to assign the occurrences to spatial bins so we can match them up to the climate layers (e.g., check out the `bin_space` function). We'd also need to resolve the difference the spatial resolutions between the past and present climatic data, potentially by coarsening the modern dataset.
+Another challenge stems from aligning these occurrences with the spatial explicit climate layers. A simple approach would be to extract the mean temperature value at each coordinate. Alternatively, we might consider adding a bit of a buffer around each coordinate to incorporate geographic uncertainty and variation in the climatic data. A third, albeit more complex approach, would be to assign the occurrences to spatial bins so we can match them up to the climate layers (e.g., check out the `bin_space` function). We'd also need to resolve the difference the spatial resolutions between the past and present climatic data, potentially by coarsening the modern dataset. We'll keep things simple and show the first approach here.
 
-We'll keep things simple and show the first approach here.
-
+Now it's onto the final section: using the combination of these datasets to carry out our analysis, and visualising our results!
 
 ## IV. Data Extraction and Visualisation
 
-We have our data binned to match the climate layers, so let's create separate datasets for each time bin.
+We're nearly there folks. It's time to put all these data sources together to answer our research question! 
+
+We have our data binned to match the climate layers, so let's create separate datasets for each time bin. 
 ```{r}
 # 25-20 Ma climate interval
 points_20 <- fossil_occ_bin_rot %>%
@@ -574,4 +624,20 @@ ggplot(palaeo_temp, aes(x = Bin, y = Temperature)) +
 When looking at the better sampled intervals in particular, we find that the mean temperature range of Crocodylia occurrences was quite similar between the Miocene and Modern.
 How might we interpret our results? How might this interpretation be shaped by the caveats we pointed out along the way?
 
-Ultimately, our goal was to provide a workflow for merging different types of datasets and thinking critically about some of the caveats that arise when doing so. These taxonomic, spatial, and temporal considerations are critical to address and report in palaeobiological and palaeoecological research in general---but particularly in studies aiming to cross the palaeontological-ecological gap. We hope you can adapt and learn from this script as you venture forward with your own exciting reserach questions and datasets!
+Ultimately, our goal was to provide a workflow for merging different types of datasets and thinking critically about some of the caveats that arise when doing so. These taxonomic, spatial, and temporal considerations are critical to address and report in palaeobiological and palaeoecological research in general---but particularly in studies aiming to cross the palaeontological-ecological gap. We hope you can adapt and learn from this script as you venture forward with your own exciting research questions and datasets!
+
+## References
+
+Darroch, S.A., Saupe, E.E., Casey, M.M. and Jorge, M.L., 2022. Integrating geographic ranges across temporal scales. Trends in Ecology & Evolution, 37(10), pp.851-860.
+
+Jones, L.A., Mannion, P.D., Farnsworth, A., Valdes, P.J., Kelland, S.J. and Allison, P.A., 2019. Coupling of palaeontological and neontological reef coral data improves forecasts of biodiversity responses under global climatic change. Royal Society Open Science, 6(4), p.182111.
+
+Nieto-Lugilde, D., Blois, J.L., Bonet-García, F.J., Giesecke, T., Gil-Romera, G. and Seddon, A., 2021. Time to better integrate paleoecological research infrastructures with neoecology to improve understanding of biodiversity long-term dynamics and to inform future conservation. Environmental Research Letters, 16(9), p.095005.
+
+Scotese, C.R., Song, H., Mills, B.J. and van der Meer, D.G., 2021. Phanerozoic paleotemperatures: The earth’s changing climate during the last 540 million years. Earth-Science Reviews, 215, p.103503.
+
+Steinthorsdottir, M., Coxall, H.K., De Boer, A.M., Huber, M., Barbolini, N., Bradshaw, C.D., Burls, N.J., Feakins, S.J., Gasson, E., Henderiks, J. and Holbourn, A.E., 2021. The Miocene: The future of the past. Paleoceanography and Paleoclimatology, 36(4), p.e2020PA004037.
+
+Valdes, P.J., Scotese, C.R. and Lunt, D.J., 2020. Deep ocean temperatures through time. Climate of the Past Discussions, 2020, pp.1-37.
+
+Veloz, S.D., Williams, J.W., Blois, J.L., He, F., Otto‐Bliesner, B. and Liu, Z., 2012. No‐analog climates and shifting realized niches during the late quaternary: implications for 21st‐century predictions by species distribution models. Global Change Biology, 18(5), pp.1698-1713.
