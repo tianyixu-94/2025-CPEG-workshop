@@ -53,7 +53,7 @@ Another clear example of the harmonization of palaeo and modern data is in under
 
 A final example synthesizes pollen data from cores to quantify rates of vegetation change over thousands of years in different regions, which sets the stage for investigating feedbacks between various anthropogenic and environvental drivers [(Mottl et al. 2021)](https://doi.org/10.1126/science.abg1685). Databases like Neotoma contain a wealth of palaeoecological records such as this, alongside chronological information, that can be leveraged to reconstruct community change with relatively high temporal resolution in shallow time.
 
-![Figure from [Flantua et al. 2023](https://doi.org/10.1111/geb.13693)] (Figure5.jpg)
+![Figure from [Flantua et al. 2023](https://doi.org/10.1111/geb.13693)](Figure5.jpg)
 
 However, there are many considerations that have to be taken into account when carrying out this type of research, and a number of practical challenges that have to be overcome to ensure that the results we get are meaningful. Differences in spatial and temporal scales, data types, and various biases that impact our data sources all make this research difficult to carry out. Today, we are going to provide a brief introduction to this broad area of research, focusing in particular on the decisions that have to be made regarding our data and research approaches. Let's dig in!
 
