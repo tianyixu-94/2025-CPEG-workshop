@@ -139,10 +139,10 @@ Now that we have a basic plan, we can start to put it into action. Let's write s
 
 First, we'll need to install and load some packages that will allow us to work with our data:
 
-```{r}
+```{r message = FALSE}
 # Install necessary packages
 #install.packages("rgbif")
-#install.packages("tidyverse")
+#install.packages("dplyr")
 #install.packages("ggplot2")
 #install.packages("palaeoverse")
 #install.packages("raster")
@@ -156,7 +156,7 @@ First, we'll need to install and load some packages that will allow us to work w
 ```{r warning=F}
 # Load packages
 library(rgbif)
-library(tidyverse)
+library(dplyr)
 library(ggplot2)
 library(palaeoverse)
 library(raster)
@@ -286,7 +286,7 @@ Let's begin!
 First, we'll load in our palaeontological data. Luckily for us, we've already been working with a Crocodylia fossil occurrence dataset. We'll use these data in our analysis. If needed, you can read in the cleaned dataset below.
 ```{r}
 # Load cleaned fossil data for order Crocodylia that we worked on earlier
-fossil_occ <- read.csv("cenozoic_crocs.csv")
+fossil_occ <- read.csv("cenozoic_crocs_clean.csv")
 ```
 
 #### 1B. Organise modern occurrence data
